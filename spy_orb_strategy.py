@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # SPY ORB CHAD: SPY Opening Range Breakout Highly Automated Dealer
 # An automated trading system that implements a 5-minute opening range breakout strategy for SPY options.
 
@@ -171,7 +172,7 @@ class SPYORBStrategy:
         self.opening_range_low = opening_df["low"].min()
         self.opening_range_set = True
         print(
-            f"Opening range set — High: {self.opening_range_high:.2f}, Low: {self.opening_range_low:.2f}"
+            f"Opening range set - High: {self.opening_range_high:.2f}, Low: {self.opening_range_low:.2f}"
         )
 
     # ---------------------------------------------------------------------
@@ -183,7 +184,7 @@ class SPYORBStrategy:
         order = MarketOrder(action, quantity)
         trade = self.ib.placeOrder(self.option_contract, order)
         self.ib.sleep(1)
-        print(f"{datetime.datetime.now(self.tz)} — {action} {quantity} {self.option_contract.localSymbol}")
+        print(f"{datetime.datetime.now(self.tz)} - {action} {quantity} {self.option_contract.localSymbol}")
         return trade
 
     def enter_position(self, position_type: str):
@@ -199,7 +200,7 @@ class SPYORBStrategy:
         self.entry_option_price = opt_ticker.marketPrice()
         self.entry_strike = self.option_contract.strike
         print(
-            f"Entered {position_type} — Underlying: {self.entry_underlying_price:.2f}, Option: {self.entry_option_price:.2f}, Strike: {self.entry_strike}"
+            f"Entered {position_type} - Underlying: {self.entry_underlying_price:.2f}, Option: {self.entry_option_price:.2f}, Strike: {self.entry_strike}"
         )
 
     def exit_all(self, reason: str):
@@ -228,14 +229,14 @@ class SPYORBStrategy:
 
         try:
             daily_trade_done = False
-            print("Starting SPY ORB strategy …")
+            print("Starting SPY ORB strategy ...")
             while True:
                 now = datetime.datetime.now(self.tz)
 
                 # Handle market hours
                 if not self.is_market_open():
                     if self.position is not None:
-                        print("Market closed — force exiting open position.")
+                        print("Market closed - force exiting open position.")
                         self.exit_all("Market closed")
                     daily_trade_done = False  # Reset for next day
                     time.sleep(60)
@@ -243,13 +244,13 @@ class SPYORBStrategy:
 
                 # Force-close time
                 if self.is_force_close_time() and self.position is not None:
-                    print("Force-close time reached — closing position.")
+                    print("Force-close time reached - closing position.")
                     self.exit_all("14:55 force close")
 
-                # Historical bars — used for signals
+                # Historical bars - used for signals
                 df = self.get_intraday_5min()
                 if df is None or df.empty:
-                    print("No historical data — waiting…")
+                    print("No historical data - waiting...")
                     time.sleep(30)
                     continue
 
@@ -285,16 +286,16 @@ class SPYORBStrategy:
                         time.sleep(5)
                         continue
 
-                    # Profit target 1 — underlying ± $1
+                    # Profit target 1 - underlying +/- $1
                     if not self.half_position_closed:
                         if self.position == "CALL" and underlying_price >= self.entry_underlying_price + self.underlying_move_target:
                             self.place_order("SELL", self.contracts // 2)
                             self.half_position_closed = True
-                            print("First profit target hit — sold half, stop moved to breakeven.")
+                            print("First profit target hit - sold half, stop moved to breakeven.")
                         elif self.position == "PUT" and underlying_price <= self.entry_underlying_price - self.underlying_move_target:
                             self.place_order("SELL", self.contracts // 2)
                             self.half_position_closed = True
-                            print("First profit target hit — sold half, stop moved to breakeven.")
+                            print("First profit target hit - sold half, stop moved to breakeven.")
 
                     # Breakeven stop on remaining half
                     if self.half_position_closed:
@@ -303,7 +304,7 @@ class SPYORBStrategy:
                             time.sleep(5)
                             continue
 
-                    # Profit target 2 — option 1.05 ITM
+                    # Profit target 2 - option 1.05 ITM
                     if self.position == "CALL" and underlying_price >= self.entry_strike + self.itm_offset:
                         self.exit_all("Second profit target (CALL)")
                         time.sleep(5)
@@ -313,10 +314,10 @@ class SPYORBStrategy:
                         time.sleep(5)
                         continue
 
-                # Loop nap — 5-sec granularity is more than enough for 5-min bars
+                # Loop nap - 5-sec granularity is more than enough for 5-min bars
                 time.sleep(5)
         except KeyboardInterrupt:
-            print("User interrupted — shutting down.")
+            print("User interrupted - shutting down.")
         except Exception as exc:
             print(f"Unhandled error: {exc}")
         finally:
