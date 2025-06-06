@@ -56,10 +56,22 @@ class SPYBOSKStrategy:
         self.kc_mult = kc_mult
         self.paper_trading = paper_trading
         self.port = port
+        
+        # Swing detection parameters
+        self.swing_length = 10
+        self.history_of_demand_to_keep = 20
+        self.box_width = 2.5
+        
         # Trading state
         self.positions: list[dict] = []  # Active positions
         self.wait_for_ema20_cross = False  # Prevent re-entry after profitable trade
         self.last_profit_side: str | None = None  # "LONG" or "SHORT"
+        
+        # Swing high/low tracking arrays
+        self.swing_high_values = []
+        self.swing_high_bns = []
+        self.swing_low_values = []
+        self.swing_low_bns = []
 
         # IB / timezone helpers
         self.tz = pytz.timezone("US/Central")
@@ -192,17 +204,76 @@ class SPYBOSKStrategy:
     # ------------------------------------------------------------------
     # Signal helpers
     # ------------------------------------------------------------------
+    def calculate_swing_highs_lows(self, data: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+        """Calculate swing highs and lows using rolling window with center=True."""
+        swing_highs = data['high'].rolling(window=self.swing_length, center=True).max()
+        swing_lows = data['low'].rolling(window=self.swing_length, center=True).min()
+        return swing_highs, swing_lows
+
+    def add_and_pop(self, array: list, new_value) -> None:
+        """Add new value to beginning of array and remove oldest if over limit."""
+        array.insert(0, new_value)
+        if len(array) > self.history_of_demand_to_keep:
+            array.pop()
+
+    def update_swing_arrays(self, df: pd.DataFrame) -> None:
+        """Update swing high/low tracking arrays with new data."""
+        # Calculate swing highs and lows
+        swing_highs, swing_lows = self.calculate_swing_highs_lows(df)
+        
+        # Update arrays with any new swing points from recent data
+        # Only check the last few bars to avoid reprocessing old data
+        start_idx = max(0, len(df) - self.swing_length * 2)
+        
+        for i in range(start_idx, len(df)):
+            # Check for new swing high
+            if not pd.isna(swing_highs.iloc[i]):
+                # Verify this is actually a swing high (current high equals the rolling max)
+                if df['high'].iloc[i] == swing_highs.iloc[i]:
+                    # Check if we already have this swing point
+                    if i not in self.swing_high_bns:
+                        self.add_and_pop(self.swing_high_values, df['high'].iloc[i])
+                        self.add_and_pop(self.swing_high_bns, i)
+            
+            # Check for new swing low
+            if not pd.isna(swing_lows.iloc[i]):
+                # Verify this is actually a swing low (current low equals the rolling min)
+                if df['low'].iloc[i] == swing_lows.iloc[i]:
+                    # Check if we already have this swing point
+                    if i not in self.swing_low_bns:
+                        self.add_and_pop(self.swing_low_values, df['low'].iloc[i])
+                        self.add_and_pop(self.swing_low_bns, i)
+
     def _break_of_structure(self, df: pd.DataFrame, last_idx: int) -> str | None:
-        """Return 'LONG' or 'SHORT' if candle at *last_idx* breaks structure."""
-        if last_idx < 3:
+        """Return 'LONG' or 'SHORT' if candle at *last_idx* breaks structure based on swing highs/lows."""
+        if last_idx < self.swing_length:
             return None
-        prev_high = df["high"].iloc[last_idx - 3:last_idx].max()
-        prev_low = df["low"].iloc[last_idx - 3:last_idx].min()
-        close = df["close"].iloc[last_idx]
-        if close > prev_high:
-            return "LONG"
-        if close < prev_low:
-            return "SHORT"
+            
+        # Update swing arrays with current data
+        self.update_swing_arrays(df)
+        
+        # Need at least some swing points to work with
+        if not self.swing_high_values or not self.swing_low_values:
+            return None
+            
+        current_close = df['close'].iloc[last_idx]
+        current_high = df['high'].iloc[last_idx]
+        current_low = df['low'].iloc[last_idx]
+        
+        # Check for bullish break of structure
+        # Price breaks above the most recent significant swing high
+        if self.swing_high_values:
+            recent_swing_high = max(self.swing_high_values[:5])  # Use top 5 recent swing highs
+            if current_close > recent_swing_high:
+                return "LONG"
+        
+        # Check for bearish break of structure  
+        # Price breaks below the most recent significant swing low
+        if self.swing_low_values:
+            recent_swing_low = min(self.swing_low_values[:5])  # Use bottom 5 recent swing lows
+            if current_close < recent_swing_low:
+                return "SHORT"
+                
         return None
 
     def check_entry_signal(self, df: pd.DataFrame) -> str | None:
@@ -324,6 +395,11 @@ class SPYBOSKStrategy:
         self.positions = []
         self.wait_for_ema20_cross = False
         self.last_profit_side = None
+        # Reset swing tracking arrays
+        self.swing_high_values = []
+        self.swing_high_bns = []
+        self.swing_low_values = []
+        self.swing_low_bns = []
 
     def _check_ema20_cross_reset(self, last_candle: pd.Series):
         if not self.wait_for_ema20_cross:
