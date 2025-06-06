@@ -360,7 +360,7 @@ class SPYREVStrategy:
             return
 
         try:
-            print("Starting SPY REV strategy …")
+            print("Starting SPY REV strategy...")
             while True:
                 now = datetime.datetime.now(self.tz)
 
