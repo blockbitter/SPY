@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # SPY REV CHAD: SPY Reversal Highly Automated Dealer
 # An automated trading system for RSI reversal trading with 9 EMA confirmation
 
@@ -81,7 +82,7 @@ class SPYREVStrategy:
             except Exception as exc:
                 print(f"Connection attempt {attempt}/{max_retries} failed: {exc}")
                 time.sleep(2)
-        print("Unable to connect after maximum retries – exiting.")
+        print("Unable to connect after maximum retries - exiting.")
         return False
 
     def get_stock_contract(self):
@@ -240,7 +241,7 @@ class SPYREVStrategy:
         order = MarketOrder(action, quantity)
         trade = self.ib.placeOrder(contract, order)
         self.ib.sleep(1)
-        print(f"{datetime.datetime.now(self.tz)} — {action} {quantity} {contract.localSymbol}")
+        print(f"{datetime.datetime.now(self.tz)} - {action} {quantity} {contract.localSymbol}")
         return trade
 
     def enter_position(self, position_type: str):
@@ -269,7 +270,7 @@ class SPYREVStrategy:
         
         self.positions.append(position)
         
-        print(f"Entered {position_type} — Underlying: {position['entry_underlying_price']:.2f}, "
+        print(f"Entered {position_type} - Underlying: {position['entry_underlying_price']:.2f}, "
               f"Option: {position['entry_option_price']:.2f}, Strike: {position['entry_strike']}, "
               f"Stop: {position['stop_loss_price']:.2f}")
         
@@ -366,31 +367,30 @@ class SPYREVStrategy:
                 # Handle market hours
                 if not self.is_market_open():
                     if self.positions:
-                        print("Market closed — force exiting open positions.")
+                        print("Market closed - force exiting open positions.")
                         self.close_all_positions("Market closed")
                     self.reset_daily_state()
-                    print("Market closed. Waiting for next market open.")
                     time.sleep(60)
                     continue
 
                 # Force-close time
                 if self.is_force_close_time() and self.positions:
-                    print("Force-close time reached — closing all positions.")
-                    self.close_all_positions("2:55 PM force close")
+                    print("Force-close time reached - closing all positions.")
+                    self.close_all_positions("14:55 force close")
 
-                # Check if we should start monitoring
+                # Start monitoring
                 if not self.monitoring_started and self.should_start_monitoring():
                     self.monitoring_started = True
-                    print("Started monitoring RSI signals at 8:25 AM.")
+                    print(f"Starting monitoring at {datetime.datetime.now(self.tz)}")
 
                 if not self.monitoring_started:
                     time.sleep(30)
                     continue
 
-                # Get historical data and calculate indicators
+                # Get historical data
                 df = self.get_intraday_5min()
-                if df is None or len(df) < self.rsi_period + 5:
-                    print("Insufficient historical data — waiting…")
+                if df is None or len(df) < max(self.rsi_period, self.ema_period) + 5:
+                    print("Insufficient historical data - waiting...")
                     time.sleep(30)
                     continue
 
@@ -432,7 +432,7 @@ class SPYREVStrategy:
                 time.sleep(5)
 
         except KeyboardInterrupt:
-            print("User interrupted — shutting down.")
+            print("User interrupted - shutting down.")
         except Exception as exc:
             print(f"Unhandled error: {exc}")
         finally:
