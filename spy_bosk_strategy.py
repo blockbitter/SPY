@@ -344,7 +344,7 @@ class SPYBOSKStrategy:
         if not self.connect_to_ib():
             return
         try:
-            print("Starting SPY BOSK strategy …")
+            print("Starting SPY BOSK strategy...")
             monitoring_started = False
             while True:
                 now = datetime.datetime.now(self.tz)
@@ -366,7 +366,7 @@ class SPYBOSKStrategy:
                 # Start monitoring after monitor_start
                 if not monitoring_started and self.should_start_monitoring():
                     monitoring_started = True
-                    print("Started monitoring BOSK signals …")
+                    print("Started monitoring BOSK signals...")
                 if not monitoring_started:
                     time.sleep(30)
                     continue
