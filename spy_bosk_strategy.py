@@ -275,14 +275,14 @@ class SPYBOSKStrategy:
         # Check for bullish break of structure
         # Price breaks above the most recent significant swing high
         if self.swing_high_values:
-            recent_swing_high = max(self.swing_high_values['top'][:5])  # Use top 5 recent swing highs
+            recent_swing_high = max(self.swing_high_values['bottom'][:5])  # Use top 5 recent swing highs
             if current_close > recent_swing_high:
                 return "LONG"
         
         # Check for bearish break of structure  
         # Price breaks below the most recent significant swing low
         if self.swing_low_values:
-            recent_swing_low = min(self.swing_low_values['bottom'][:5])  # Use bottom 5 recent swing lows
+            recent_swing_low = min(self.swing_low_values['top'][:5])  # Use bottom 5 recent swing lows
             if current_close < recent_swing_low:
                 return "SHORT"
                 
