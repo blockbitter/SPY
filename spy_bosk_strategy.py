@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # SPY BOSK CHAD: Break-Of-Structure & Keltner Channel Highly Automated Dealer
 # An automated trading system that implements the BOSK strategy for SPY options.
 
@@ -83,7 +84,7 @@ class SPYBOSKStrategy:
             except Exception as exc:
                 print(f"Connection attempt {attempt}/{max_retries} failed: {exc}")
                 time.sleep(2)
-        print("Unable to connect after maximum retries – exiting.")
+        print("Unable to connect after maximum retries - exiting.")
         return False
 
 
@@ -233,7 +234,7 @@ class SPYBOSKStrategy:
         order = MarketOrder(action, quantity)
         trade = self.ib.placeOrder(contract, order)
         self.ib.sleep(1)
-        print(f"{datetime.datetime.now(self.tz)} — {action} {quantity} {contract.localSymbol}")
+        print(f"{datetime.datetime.now(self.tz)} - {action} {quantity} {contract.localSymbol}")
         return trade
 
     def enter_position(self, position_type: str):
@@ -259,7 +260,7 @@ class SPYBOSKStrategy:
         }
         self.positions.append(position)
         print(
-            f"Entered {position_type} — Underlying: {entry_underlying:.2f}, Option: {entry_option_price:.2f}, Strike: {position['entry_strike']}"
+            f"Entered {position_type} - Underlying: {entry_underlying:.2f}, Option: {entry_option_price:.2f}, Strike: {position['entry_strike']}"
         )
 
     def check_stop_loss(self, position: dict, last_candle: pd.Series) -> bool:
@@ -351,16 +352,16 @@ class SPYBOSKStrategy:
                 # Market hours check
                 if not self.is_market_open():
                     if self.positions:
-                        print("Market closed — exiting all positions.")
+                        print("Market closed - exiting all positions.")
                         self.close_all_positions("Market closed")
                     self.reset_daily_state()
                     time.sleep(60)
                     continue
 
-                # Force close time
+                # Force-close time
                 if self.is_force_close_time() and self.positions:
-                    print("Force-close time reached — closing all positions.")
-                    self.close_all_positions("2:55 PM force close")
+                    print("Force-close time reached - closing all positions.")
+                    self.close_all_positions("14:55 force close")
 
                 # Start monitoring after monitor_start
                 if not monitoring_started and self.should_start_monitoring():
@@ -372,8 +373,8 @@ class SPYBOSKStrategy:
 
                 # Fetch data
                 df = self.get_intraday_5min()
-                if df is None or len(df) < self.ema20_period + 5:
-                    print("Insufficient historical data — waiting…")
+                if df is None or len(df) < max(self.ema9_period, self.ema20_period, self.atr_period) + 5:
+                    print("Insufficient historical data - waiting...")
                     time.sleep(30)
                     continue
                 df = self.calculate_indicators(df)
@@ -408,7 +409,7 @@ class SPYBOSKStrategy:
                 # Pace loop
                 time.sleep(5)
         except KeyboardInterrupt:
-            print("User interrupted — shutting down.")
+            print("User interrupted - shutting down.")
         except Exception as exc:
             print(f"Unhandled error: {exc}")
         finally:
