@@ -49,13 +49,20 @@ class StrategyManager:
     def _setup_logging(self):
         """Setup logging configuration."""
         log_level = self.config.get('global', {}).get('log_level', 'INFO')
+        
+        # Create handlers with explicit UTF-8 encoding
+        file_handler = logging.FileHandler('strategy_manager.log', encoding='utf-8')
+        stream_handler = logging.StreamHandler(sys.stdout)
+        
+        # Set the same formatter for both handlers
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        stream_handler.setFormatter(formatter)
+        
+        # Configure logging with explicit handlers
         logging.basicConfig(
             level=getattr(logging, log_level),
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler('strategy_manager.log'),
-                logging.StreamHandler(sys.stdout)
-            ]
+            handlers=[file_handler, stream_handler]
         )
         self.logger = logging.getLogger('StrategyManager')
     
