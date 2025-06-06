@@ -216,33 +216,45 @@ class SPYBOSKStrategy:
         if len(array) > self.history_of_demand_to_keep:
             array.pop()
 
+    def calculate_atr(self, data, period=50):
+        high_low = data['high'] - data['low']
+        high_close = np.abs(data['high'] - data['close'].shift())
+        low_close = np.abs(data['low'] - data['close'].shift())
+        ranges = pd.concat([high_low, high_close, low_close], axis=1)
+        true_range = np.max(ranges, axis=1)
+        atr = true_range.rolling(window=period).mean()
+        return atr
+
+    # Function to check overlapping zones
+    def check_overlapping(self, new_poi, existing_zones, atr):
+        atr_threshold = atr * 2
+        for zone in existing_zones:
+            poi = (zone['top'] + zone['bottom']) / 2
+            if new_poi >= poi - atr_threshold and new_poi <= poi + atr_threshold:
+                return False
+        return True
+
     def update_swing_arrays(self, df: pd.DataFrame) -> None:
         """Update swing high/low tracking arrays with new data."""
         # Calculate swing highs and lows
         swing_highs, swing_lows = self.calculate_swing_highs_lows(df)
-        
-        # Update arrays with any new swing points from recent data
-        # Only check the last few bars to avoid reprocessing old data
-        start_idx = max(0, len(df) - self.swing_length * 2)
-        
-        for i in range(start_idx, len(df)):
-            # Check for new swing high
-            if not pd.isna(swing_highs.iloc[i]):
-                # Verify this is actually a swing high (current high equals the rolling max)
-                if df['high'].iloc[i] == swing_highs.iloc[i]:
-                    # Check if we already have this swing point
-                    if i not in self.swing_high_bns:
-                        self.add_and_pop(self.swing_high_values, df['high'].iloc[i])
-                        self.add_and_pop(self.swing_high_bns, i)
-            
-            # Check for new swing low
-            if not pd.isna(swing_lows.iloc[i]):
-                # Verify this is actually a swing low (current low equals the rolling min)
-                if df['low'].iloc[i] == swing_lows.iloc[i]:
-                    # Check if we already have this swing point
-                    if i not in self.swing_low_bns:
-                        self.add_and_pop(self.swing_low_values, df['low'].iloc[i])
-                        self.add_and_pop(self.swing_low_bns, i)
+        atr = self.calculate_atr(df)
+
+        for index, value in swing_highs.items():
+            atr_buffer = atr[index] * (self.box_width / 10)
+            box_top = value
+            box_bottom = box_top - atr_buffer
+            poi = (box_top + box_bottom) / 2
+            if self.check_overlapping(poi, self.swing_high_values, df['atr'][index]):
+                self.swing_high_values.append({'top': box_top, 'bottom': box_bottom, 'index': index})
+
+        for index, value in swing_lows.items():
+            atr_buffer = atr[index] * (self.box_width / 10)
+            box_bottom = value
+            box_top = box_bottom + atr_buffer
+            if self.check_overlapping(poi, self.swing_low_values, atr[index]):
+                self.swing_low_values.append({'top': box_top, 'bottom': box_bottom, 'index': index})
+
 
     def _break_of_structure(self, df: pd.DataFrame, last_idx: int) -> str | None:
         """Return 'LONG' or 'SHORT' if candle at *last_idx* breaks structure based on swing highs/lows."""
@@ -263,14 +275,14 @@ class SPYBOSKStrategy:
         # Check for bullish break of structure
         # Price breaks above the most recent significant swing high
         if self.swing_high_values:
-            recent_swing_high = max(self.swing_high_values[:5])  # Use top 5 recent swing highs
+            recent_swing_high = max(self.swing_high_values['top'][:5])  # Use top 5 recent swing highs
             if current_close > recent_swing_high:
                 return "LONG"
         
         # Check for bearish break of structure  
         # Price breaks below the most recent significant swing low
         if self.swing_low_values:
-            recent_swing_low = min(self.swing_low_values[:5])  # Use bottom 5 recent swing lows
+            recent_swing_low = min(self.swing_low_values['bottom'][:5])  # Use bottom 5 recent swing lows
             if current_close < recent_swing_low:
                 return "SHORT"
                 
