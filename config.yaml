@@ -12,7 +12,7 @@ strategies:
       underlying_move_target: 1.55  # 1 ITM + $0.05 from strike
       itm_offset: 2.05               # 2 ITM + $0.05 from strike
       paper_trading: true
-      port: 7498
+      port: 7497
 
   spx_orb:
     enabled: false
@@ -125,7 +125,7 @@ strategies:
       port: 7499
 
   spy_bosk:
-    enabled: true
+    enabled: false
     script: "spy_bosk_strategy.py"
     args:
       ticker: "SPY"
