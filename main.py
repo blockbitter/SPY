@@ -109,6 +109,11 @@ class StrategyManager:
                 # Set up environment for bundled app
                 env = os.environ.copy()
                 
+                # Force UTF-8 encoding in subprocess environment
+                env['PYTHONIOENCODING'] = 'utf-8'
+                env['LC_ALL'] = 'en_US.UTF-8'
+                env['LANG'] = 'en_US.UTF-8'
+                
                 # Always set PYTHONPATH to match the main app's sys.path
                 # This ensures subprocess has same module search paths as main app
                 current_pythonpath = env.get('PYTHONPATH', '')
