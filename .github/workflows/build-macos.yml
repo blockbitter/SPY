@@ -30,6 +30,7 @@ jobs:
           cp config.yaml ./dist/MacApp.app/Contents/Resources/
           cp spy_bosk_strategy.py ./dist/MacApp.app/Contents/Resources/
           cp spy_orb_strategy.py ./dist/MacApp.app/Contents/Resources/
+          cp spy_rev_strategy.py ./dist/MacApp.app/Contents/Resources/
 
       - name: Explore app bundle structure
         run: |
