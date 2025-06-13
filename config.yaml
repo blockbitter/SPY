@@ -70,7 +70,7 @@ strategies:
       port: 7498
 
   spy_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPY"
@@ -78,7 +78,7 @@ strategies:
       underlying_move_target: 0.80  # ATM + $0.05 with $0.80 minimum move
       itm_offset: 2.05               # 2 ITM + $0.05
       paper_trading: true
-      port: 7499
+      port: 7497
 
   spx_rev:
     enabled: false
@@ -125,7 +125,7 @@ strategies:
       port: 7499
 
   spy_bosk:
-    enabled: false
+    enabled: true
     script: "spy_bosk_strategy.py"
     args:
       ticker: "SPY"
