@@ -213,10 +213,10 @@ class SPYREVStrategy:
 
     def check_entry_conditions(self, df: pd.DataFrame) -> str | None:
         """Check if entry conditions are met based on existing RSI signal."""
-        if len(df) < 2 or self.rsi_signal is None:
+        if len(df) < 1 or self.rsi_signal is None:
             return None
             
-        last_candle = df.iloc[-2]  # Last completed candle
+        last_candle = df.iloc[-1]  # Last completed candle
         close_price = last_candle['close']
         ema_9 = last_candle['ema_9']
         
@@ -395,7 +395,7 @@ class SPYREVStrategy:
                     continue
 
                 df = self.calculate_indicators(df)
-                last_candle = df.iloc[-2]  # Last completed candle
+                last_candle = df.iloc[-1]  # Last completed candle
 
                 # Check for new RSI signals (only if we can open new trades)
                 if self.can_open_new_trades() and self.rsi_signal is None:
