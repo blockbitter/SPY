@@ -15,7 +15,7 @@ strategies:
       port: 7497
 
   spx_orb:
-    enabled: true
+    enabled: false
     script: "spy_orb_strategy.py"
     args:
       ticker: "SPX"
