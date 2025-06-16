@@ -398,7 +398,7 @@ class SPYREVStrategy:
                 last_candle = df.iloc[-1]  # Last completed candle
 
                 # Check for new RSI signals (only if we can open new trades)
-                if self.can_open_new_trades() and self.rsi_signal is None:
+                if self.can_open_new_trades():
                     new_signal = self.check_rsi_signal(df)
                     if new_signal:
                         self.rsi_signal = new_signal
