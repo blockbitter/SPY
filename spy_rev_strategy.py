@@ -178,8 +178,8 @@ class SPYREVStrategy:
         """Calculate RSI and 9 EMA indicators."""
         # Calculate RSI
         delta = df['close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=self.rsi_period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=self.rsi_period).mean()
+        gain = (delta.where(delta > 0, 0)).rolling(window=self.rsi_period).mean() + 2 * (delta.where(delta > 0, 0)).rolling(window=self.rsi_period).std()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=self.rsi_period).mean() - 2 * (-delta.where(delta < 0, 0)).rolling(window=self.rsi_period).std()
         rs = gain / loss
         df['rsi'] = 100 - (100 / (1 + rs))
         
