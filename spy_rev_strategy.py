@@ -193,10 +193,10 @@ class SPYREVStrategy:
     # ---------------------------------------------------------------------
     def check_rsi_signal(self, df: pd.DataFrame) -> str | None:
         """Check for RSI extreme conditions on the last completed candle."""
-        if len(df) < 2:
+        if len(df) < 1:
             return None
             
-        last_candle = df.iloc[-2]  # Last completed candle
+        last_candle = df.iloc[-1]  # Last completed candle
         rsi = last_candle['rsi']
 
         if pd.isna(rsi):
