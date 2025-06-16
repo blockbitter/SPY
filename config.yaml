@@ -15,7 +15,7 @@ strategies:
       port: 7497
 
   spx_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "SPX"
@@ -23,7 +23,7 @@ strategies:
       underlying_move_target: 2.25  # 2 ITM + $0.25 from strike
       itm_offset: 4.25               # 4 ITM + $0.25 from strike
       paper_trading: true
-      port: 7498
+      port: 7497
 
   qqq_orb:
     enabled: false
