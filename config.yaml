@@ -78,6 +78,8 @@ strategies:
       underlying_move_target: 0.80  # ATM + $0.05 with $0.80 minimum move
       itm_offset: 2.05               # 2 ITM + $0.05
       paper_trading: true
+      rsi_threshold: 0.01 # this number is subtracted from oversold, added to overbought. (so for this case, it would be 29.99 oversold, 70.01 overbought)
+      ema_threshold: 0.01 # this number is subtracted from short setup, added to long setup. (so for this case, it would be 9.01 long, 8.99 short)
       port: 7497
 
   spx_rev:
