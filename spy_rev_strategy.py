@@ -36,6 +36,8 @@ class SPYREVStrategy:
         rsi_overbought: float = 70.0,
         paper_trading: bool = True,
         port: int = 7497,
+        rsi_threshold: float = 0.01,
+        ema_threshold: float = 0.01,
     ):
         self.ticker = ticker
         self.contracts = contracts
@@ -53,6 +55,8 @@ class SPYREVStrategy:
         self.rsi_overbought = rsi_overbought
         self.paper_trading = paper_trading
         self.port = port
+        self.rsi_threshold = rsi_threshold
+        self.ema_threshold = ema_threshold
         # Trading state - can have multiple positions
         self.positions = []  # List of active positions
         self.rsi_signal = None  # "LONG_SETUP" or "SHORT_SETUP" or None
@@ -202,10 +206,10 @@ class SPYREVStrategy:
         if pd.isna(rsi):
             return None
             
-        if rsi < self.rsi_oversold:
+        if rsi < self.rsi_oversold - self.rsi_threshold:
             self.rsi_signal_price = last_candle['close']
             return "LONG_SETUP"
-        elif rsi > self.rsi_overbought:
+        elif rsi > self.rsi_overbought + self.rsi_threshold:
             self.rsi_signal_price = last_candle['close']
             return "SHORT_SETUP"
         
@@ -223,9 +227,9 @@ class SPYREVStrategy:
         if pd.isna(ema_9):
             return None
             
-        if self.rsi_signal == "LONG_SETUP" and close_price > ema_9:
+        if self.rsi_signal == "LONG_SETUP" and close_price > ema_9 + self.ema_threshold:
             return "ENTER_LONG"
-        elif self.rsi_signal == "SHORT_SETUP" and close_price < ema_9:
+        elif self.rsi_signal == "SHORT_SETUP" and close_price < ema_9 - self.ema_threshold:
             return "ENTER_SHORT"
             
         return None
@@ -455,6 +459,8 @@ if __name__ == "__main__":
     parser.add_argument("--rsi_oversold", type=float, default=30.0, help="RSI oversold level")
     parser.add_argument("--rsi_overbought", type=float, default=70.0, help="RSI overbought level")
     parser.add_argument("--paper_trading", action="store_true", help="Use paper trading account")
+    parser.add_argument("--rsi_threshold", type=float, default=0.01, help="RSI threshold")
+    parser.add_argument("--ema_threshold", type=float, default=0.01, help="EMA threshold")
     parser.add_argument("--port", type=int, default=7497, help="Port number")
     args = parser.parse_args()
 
@@ -469,5 +475,7 @@ if __name__ == "__main__":
         rsi_overbought=args.rsi_overbought,
         paper_trading=args.paper_trading,
         port=args.port,
+        rsi_threshold=args.rsi_threshold,
+        ema_threshold=args.ema_threshold,
     )
     strategy.run() 
