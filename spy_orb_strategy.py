@@ -164,7 +164,13 @@ class SPYORBStrategy:
             datetime.datetime.combine(today, datetime.datetime.strptime(self.market_open, "%H:%M:%S").time())
         )
         range_end = market_open_dt + datetime.timedelta(minutes=15)
-        opening_df = today_df[today_df["date"] < range_end]
+       
+        opening_df = today_df[
+             (today_df["date"] >= market_open_dt) & (today_df["date"] <= range_end)
+]
+        
+        print("Opening range bars:")
+        print(opening_df[["date", "open", "high", "low", "close"]])
         if len(opening_df) < 3:
             return  # Need 3 complete candles
 
