@@ -10,25 +10,21 @@ import time
 import pytz
 from ib_insync import *
 
-
 class SPYORBStrategy:
     def __init__(
         self,
         ticker: str = "SPY",
         contracts: int = 2,
-        underlying_move_target: float = 1.0,
-        itm_offset: float = 1.05,
         market_open: str = "08:30:00",
         market_close: str = "15:00:00",
         force_close_time: str = "14:55:00",
         bar_size: str = "5 mins",
         paper_trading: bool = True,
         port: int = 7497,
+        partial_sell_targets: list = [1.00, 2.00],  # New logic: targets for partial sell
     ):
         self.ticker = ticker
         self.contracts = contracts
-        self.underlying_move_target = underlying_move_target
-        self.itm_offset = itm_offset
         self.market_open = market_open
         self.market_close = market_close
         self.force_close_time = force_close_time
@@ -36,6 +32,7 @@ class SPYORBStrategy:
         self.paper_trading = paper_trading
         self.port = port
 
+        self.partial_sell_targets = partial_sell_targets  # List of price move targets for partial sell
         self.opening_range_high = None
         self.opening_range_low = None
         self.opening_range_set = False
@@ -45,7 +42,7 @@ class SPYORBStrategy:
         self.entry_underlying_price = None
         self.entry_option_price = None
         self.entry_strike = None
-        self.half_position_closed = False
+        self.sold_targets = []  # Track which partial sell targets have been hit
 
         self.tz = pytz.timezone("US/Central")
         self.ib = IB()
@@ -93,57 +90,6 @@ class SPYORBStrategy:
             self.ib.qualifyContracts(contract)
         return contract
 
-    def is_market_open(self) -> bool:
-        now = datetime.datetime.now(self.tz)
-        today = now.date()
-        mo = self.tz.localize(datetime.datetime.combine(today, datetime.datetime.strptime(self.market_open, "%H:%M:%S").time()))
-        mc = self.tz.localize(datetime.datetime.combine(today, datetime.datetime.strptime(self.market_close, "%H:%M:%S").time()))
-        return mo <= now <= mc
-
-    def is_force_close_time(self) -> bool:
-        now = datetime.datetime.now(self.tz)
-        today = now.date()
-        fct = self.tz.localize(datetime.datetime.combine(today, datetime.datetime.strptime(self.force_close_time, "%H:%M:%S").time()))
-        return now >= fct
-
-    def get_intraday_5min(self, duration: str = "1 D") -> pd.DataFrame | None:
-        contract = self.get_stock_contract()
-        bars = self.ib.reqHistoricalData(
-            contract,
-            endDateTime="",
-            durationStr=duration,
-            barSizeSetting=self.bar_size,
-            whatToShow="TRADES",
-            useRTH=True,
-            formatDate=1,
-        )
-        if not bars:
-            return None
-        df = util.df(bars)
-        df["date"] = pd.to_datetime(df["date"])
-        return df
-
-    def calculate_opening_range(self, df: pd.DataFrame):
-        now = datetime.datetime.now(self.tz)
-        today = now.date()
-        market_open_dt = self.tz.localize(datetime.datetime.combine(today, datetime.datetime.strptime(self.market_open, "%H:%M:%S").time()))
-        range_end = market_open_dt + datetime.timedelta(minutes=15)
-        if now < range_end:
-            return
-        today_df = df[df["date"].dt.date == today]
-        if today_df.empty:
-            return
-        opening_df = today_df[(today_df["date"] >= market_open_dt) & (today_df["date"] <= range_end)]
-        if len(opening_df) < 3:
-            print("Waiting for full 3 bars for opening range...")
-            return
-        self.opening_range_high = opening_df["high"].max()
-        self.opening_range_low = opening_df["low"].min()
-        self.opening_range_set = True
-        print("Opening range bars:")
-        print(opening_df[["date", "open", "high", "low", "close"]])
-        print(f"Opening range set - High: {self.opening_range_high:.2f}, Low: {self.opening_range_low:.2f}")
-
     def place_order(self, action: str, quantity: int):
         if self.option_contract is None:
             raise RuntimeError("Option contract not initialised before order placement.")
@@ -178,6 +124,26 @@ class SPYORBStrategy:
         self.entry_option_price = None
         self.entry_strike = None
         self.half_position_closed = False
+
+    def monitor_price_move(self, underlying_price):
+        if self.position == 0:
+            return  # No position to monitor
+
+        # Check for partial sell conditions based on underlying price movement
+        price_movement = underlying_price - self.entry_underlying_price
+        for target in self.partial_sell_targets:
+            if price_movement >= target and target not in self.sold_targets:
+                self.sell_partial_position(target)
+                self.sold_targets.append(target)  # Ensure we only sell once per target
+
+    def sell_partial_position(self, target):
+        # Sell half of the position based on target
+        qty_to_sell = self.contracts // 2
+        action = "SELL"
+        print(f"Selling {qty_to_sell} contracts at {target} move target")
+        
+        # You would need to determine the appropriate option contract to sell based on your strategy.
+        self.place_order(action, qty_to_sell)
 
     def run(self):
         if not self.connect_to_ib():
@@ -230,28 +196,9 @@ class SPYORBStrategy:
                         self.exit_all("EMA stop loss (PUT)")
                         time.sleep(5)
                         continue
-                    if not self.half_position_closed:
-                        if self.position == "CALL" and underlying_price >= self.entry_underlying_price + self.underlying_move_target:
-                            self.place_order("SELL", self.contracts // 2)
-                            self.half_position_closed = True
-                            print("First profit target hit - sold half, stop moved to breakeven.")
-                        elif self.position == "PUT" and underlying_price <= self.entry_underlying_price - self.underlying_move_target:
-                            self.place_order("SELL", self.contracts // 2)
-                            self.half_position_closed = True
-                            print("First profit target hit - sold half, stop moved to breakeven.")
-                    if self.half_position_closed:
-                        if option_price <= self.entry_option_price:
-                            self.exit_all("Breakeven stop (remaining half)")
-                            time.sleep(5)
-                            continue
-                    if self.position == "CALL" and underlying_price >= self.entry_strike + self.itm_offset:
-                        self.exit_all("Second profit target (CALL)")
-                        time.sleep(5)
-                        continue
-                    if self.position == "PUT" and underlying_price <= self.entry_strike - self.itm_offset:
-                        self.exit_all("Second profit target (PUT)")
-                        time.sleep(5)
-                        continue
+
+                    # Monitor price for partial sell conditions
+                    self.monitor_price_move(underlying_price)
                 time.sleep(5)
         except KeyboardInterrupt:
             print("User interrupted - shutting down.")
@@ -263,22 +210,17 @@ class SPYORBStrategy:
             self.ib.disconnect()
             print("Disconnected from Interactive Brokers.")
 
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="SPY Opening Range Breakout strategy")
     parser.add_argument("--ticker", type=str, default="SPY", help="Underlying ticker symbol")
     parser.add_argument("--contracts", type=int, default=2, help="Number of option contracts to trade")
-    parser.add_argument("--underlying_move_target", type=float, default=1.0, help="First profit target (underlying $ move)")
-    parser.add_argument("--itm_offset", type=float, default=1.05, help="Underlying distance beyond strike for second target")
     parser.add_argument("--paper_trading", action="store_true", help="Use paper trading account (7497)")
     parser.add_argument("--port", type=int, default=7497, help="Port number")
     args = parser.parse_args()
     strategy = SPYORBStrategy(
         ticker=args.ticker,
         contracts=args.contracts,
-        underlying_move_target=args.underlying_move_target,
-        itm_offset=args.itm_offset,
         paper_trading=args.paper_trading,
         port=args.port,
     )
