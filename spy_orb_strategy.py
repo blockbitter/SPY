@@ -154,32 +154,38 @@ class SPYORBStrategy:
         return df
 
     def calculate_opening_range(self, df: pd.DataFrame):
-        today = datetime.datetime.now(self.tz).date()
-        # Filter today & first 15 minutes (3 * 5-minute candles)
+        now = datetime.datetime.now(self.tz)
+        today = now.date()
+
+        # Only calculate range after 8:45am CT
+        market_open_dt = self.tz.localize(datetime.datetime.combine(today, datetime.datetime.strptime(self.market_open, "%H:%M:%S").time()))
+        range_end = market_open_dt + datetime.timedelta(minutes=15)
+    
+        if now < range_end:
+            return  # Don't define opening range early
+
         today_df = df[df["date"].dt.date == today]
         if today_df.empty:
-            return  # Wait until we have today's data
+            return
 
-        market_open_dt = self.tz.localize(
-            datetime.datetime.combine(today, datetime.datetime.strptime(self.market_open, "%H:%M:%S").time())
-        )
-        range_end = market_open_dt + datetime.timedelta(minutes=15)
-       
         opening_df = today_df[
-             (today_df["date"] >= market_open_dt) & (today_df["date"] <= range_end)
-]
-        
-        print("Opening range bars:")
-        print(opening_df[["date", "open", "high", "low", "close"]])
+            (today_df["date"] >= market_open_dt) & (today_df["date"] <= range_end)
+        ]
+
         if len(opening_df) < 3:
-            return  # Need 3 complete candles
+            print("Waiting for full 3 bars for opening range...")
+            return
 
         self.opening_range_high = opening_df["high"].max()
         self.opening_range_low = opening_df["low"].min()
         self.opening_range_set = True
+
+        print("Opening range bars:")
+        print(opening_df[["date", "open", "high", "low", "close"]])
         print(
             f"Opening range set - High: {self.opening_range_high:.2f}, Low: {self.opening_range_low:.2f}"
         )
+
 
     # ---------------------------------------------------------------------
     # Order helpers
