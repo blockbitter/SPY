@@ -94,7 +94,7 @@ strategies:
       port: 7497
 
   spx_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPX"
@@ -102,10 +102,10 @@ strategies:
       underlying_move_target: 2.25  # 2 ITM + $0.25
       itm_offset: 4.25               # 4 ITM + $0.25
       paper_trading: true
-      port: 7499
+      port: 7497
 
   qqq_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "QQQ"
@@ -113,10 +113,10 @@ strategies:
       underlying_move_target: 0.80  # same as SPY
       itm_offset: 2.05
       paper_trading: true
-      port: 7499
+      port: 7497
 
   tsla_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "TSLA"
@@ -124,10 +124,10 @@ strategies:
       underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
       itm_offset: 1.05
       paper_trading: true
-      port: 7499
+      port: 7497
 
   iwm_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "IWM"
@@ -135,7 +135,7 @@ strategies:
       underlying_move_target: 0.60  # ATM + $0.02 with $0.60 minimum move
       itm_offset: 1.02
       paper_trading: true
-      port: 7499
+      port: 7497
 
 # Global settings
 global:
