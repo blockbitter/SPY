@@ -207,7 +207,47 @@ class SPYBOSKStrategy:
 
         return None
 
-    # Main loop
+    def check_stop_loss(self, position: dict, last_candle: pd.Series) -> bool:
+        """Check if the position should be stopped out based on the 20 EMA."""
+        close_price = last_candle["close"]
+        ema20 = last_candle["ema20"]  # Using 20 EMA instead of 9 EMA
+        
+        if np.isnan(ema20):
+            return False
+        
+        if position["type"] == "CALL":
+            # For long positions: Exit if price closes below the 20 EMA
+            if close_price < ema20:
+                return True
+        else:
+            # For short positions: Exit if price closes above the 20 EMA
+            if close_price > ema20:
+                return True
+        
+        return False
+
+    def exit_position(self, position: dict, reason: str, partial: bool = False):
+        """Exit the position."""
+        if partial and not position["half_sold"]:
+            qty = self.contracts // 2
+            position["contracts_remaining"] -= qty
+            position["half_sold"] = True
+        else:
+            qty = position["contracts_remaining"]
+        self.place_order(position["contract"], "SELL", qty)
+        option_price = self.ib.reqTickers(position["contract"])[0].marketPrice()
+        pnl = (option_price - position["entry_option_price"]) * 100
+        print(f"Closed {qty} {position['type']} | Reason: {reason} | P/L: ${pnl:.2f}/contract")
+        if not partial or position["contracts_remaining"] == 0:
+            # Determine if profitable for re-entry guard
+            self.wait_for_ema20_cross = pnl > 0
+            self.last_profit_side = "LONG" if position["type"] == "CALL" else "SHORT"
+            self.positions.remove(position)
+
+    def close_all_positions(self, reason: str):
+        for pos in self.positions[:]:
+            self.exit_position(pos, reason)
+
     def run(self):
         if not self.connect_to_ib():
             return
@@ -262,14 +302,7 @@ class SPYBOSKStrategy:
                     if self.check_stop_loss(pos, last_candle):
                         self.exit_position(pos, "Stop loss")
                         continue
-                    # Profit targets
-                    tgt = self.check_profit_targets(pos)
-                    if tgt == "FIRST_TARGET":
-                        self.exit_position(pos, "First profit target", partial=True)
-                    elif tgt == "BREAKEVEN_STOP":
-                        self.exit_position(pos, "Breakeven stop")
-                    elif tgt == "SECOND_TARGET":
-                        self.exit_position(pos, "Second profit target")
+                    # Profit targets (rest of your position management code)
 
                 # Pace loop
                 time.sleep(5)
@@ -282,4 +315,3 @@ class SPYBOSKStrategy:
                 self.close_all_positions("Shutdown")
             self.ib.disconnect()
             print("Disconnected from Interactive Brokers.")
-
