@@ -58,6 +58,17 @@ strategies:
       paper_trading: true
       port: 7497
 
+  amzn_orb:
+    enabled: true
+    script: "spy_orb_strategy.py"
+    args:
+      ticker: "AMZN"
+      contracts: 2
+      underlying_move_target: 1.55  # same as SPY
+      itm_offset: 2.05
+      paper_trading: true
+      port: 7497
+
   iwm_orb:
     enabled: true
     script: "spy_orb_strategy.py"
