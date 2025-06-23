@@ -8,27 +8,29 @@ import numpy as np
 import datetime
 import time
 import pytz
+import yaml
 from ib_insync import *
 
 class SPYREVStrategy:
     """RSI Reversal strategy for SPY 0-DTE options with Keltner Channel-based stop loss."""
 
-    def __init__(self, **kwargs):
-        self.ticker = kwargs.get("ticker", "SPY")
-        self.contracts = kwargs.get("contracts", 2)
-        self.market_open = kwargs.get("market_open", "08:30:00")
-        self.market_close = kwargs.get("market_close", "15:00:00")
-        self.force_close_time = kwargs.get("force_close_time", "14:55:00")
-        self.bar_size = kwargs.get("bar_size", "5 mins")
-        self.rsi_period = kwargs.get("rsi_period", 14)
-        self.ema_period = kwargs.get("ema_period", 9)
-        self.rsi_oversold = kwargs.get("rsi_oversold", 30.0)
-        self.rsi_overbought = kwargs.get("rsi_overbought", 70.0)
-        self.paper_trading = kwargs.get("paper_trading", True)
-        self.port = kwargs.get("port", 7497)
+    def __init__(self, config):
+        # Load configuration from the YAML file
+        self.ticker = config.get("ticker", "SPY")
+        self.contracts = config.get("contracts", 2)
+        self.market_open = config.get("market_open", "08:30:00")
+        self.market_close = config.get("market_close", "15:00:00")
+        self.force_close_time = config.get("force_close_time", "14:55:00")
+        self.bar_size = config.get("bar_size", "5 mins")
+        self.rsi_period = config.get("rsi_period", 14)
+        self.ema_period = config.get("ema_period", 9)
+        self.rsi_oversold = config.get("rsi_oversold", 30.0)
+        self.rsi_overbought = config.get("rsi_overbought", 70.0)
+        self.paper_trading = config.get("paper_trading", True)
+        self.port = config.get("port", 7497)
 
-        # New partial sell targets (based on price movement)
-        self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Target move in price (e.g., $1, $2)
+        # Partial sell targets (loaded from YAML)
+        self.partial_sell_targets = config.get("partial_sell_targets", [1.00, 2.00])  # Target price movement
 
         # Trading state - can have multiple positions
         self.positions = []  # List of active positions
@@ -144,22 +146,16 @@ class SPYREVStrategy:
             self.ib.disconnect()
             print("Disconnected from Interactive Brokers.")
 
+# Load configuration from YAML
+def load_config():
+    with open("config.yaml", 'r') as file:
+        return yaml.safe_load(file)
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="SPY REV (Reversal) trading strategy")
-    parser.add_argument("--ticker", type=str, default="SPY", help="Underlying ticker symbol")
-    parser.add_argument("--contracts", type=int, default=2, help="Number of option contracts to trade")
-    parser.add_argument("--paper_trading", action="store_true", help="Use paper trading account")
-    parser.add_argument("--port", type=int, default=7497, help="Port number")
-    parser.add_argument("--partial_sell_targets", type=float, nargs='+', default=[1.00, 2.00], help="Partial sell targets based on price movement")
-    args = parser.parse_args()
+    # Load config.yaml
+    config = load_config()['spy_rev']
 
-    strategy = SPYREVStrategy(
-        ticker=args.ticker,
-        contracts=args.contracts,
-        paper_trading=args.paper_trading,
-        port=args.port,
-        partial_sell_targets=args.partial_sell_targets  # Added the partial sell targets
-    )
+    strategy = SPYREVStrategy(config=config['args'])
     strategy.run()
