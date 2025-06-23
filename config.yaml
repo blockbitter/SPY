@@ -15,7 +15,7 @@ strategies:
       port: 7497
 
   spx_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "SPX"
@@ -26,7 +26,7 @@ strategies:
       port: 7497
 
   qqq_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "QQQ"
@@ -34,10 +34,10 @@ strategies:
       underlying_move_target: 1.55  # same as SPY
       itm_offset: 2.05
       paper_trading: true
-      port: 7498
+      port: 7497
 
   nvda_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "NVDA"
@@ -45,10 +45,10 @@ strategies:
       underlying_move_target: 0.50  # ATM + $0.02 with $0.50 minimum move
       itm_offset: 1.02
       paper_trading: true
-      port: 7498
+      port: 7497
 
   tsla_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "TSLA"
@@ -56,10 +56,10 @@ strategies:
       underlying_move_target: 2.05  # ATM + $0.15 with $1.00 minimum move
       itm_offset: 1.05               # 1 ITM + $0.05
       paper_trading: true
-      port: 7498
+      port: 7497
 
   iwm_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "IWM"
@@ -67,7 +67,7 @@ strategies:
       underlying_move_target: 0.50  # same as NVDA
       itm_offset: 1.02
       paper_trading: true
-      port: 7498
+      port: 7497
 
   spy_rev:
     enabled: true
