@@ -137,6 +137,17 @@ strategies:
       paper_trading: true
       port: 7497
 
+   spy_bosk:
+    enabled: true
+    script: "spy_bosk_strategy.py"
+    args:
+      ticker: "SPY"
+      contracts: 2
+      underlying_move_target: 1.55  # 1 ITM + $0.05 from strike
+      itm_offset: 2.05               # 2 ITM + $0.05 from strike
+      paper_trading: true
+      port: 7497
+
 # Global settings
 global:
   log_level: "INFO"
