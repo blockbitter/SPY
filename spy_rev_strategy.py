@@ -369,16 +369,21 @@ if __name__ == "__main__":
     import argparse
 
     p = argparse.ArgumentParser()
-    p.add_argument("--ticker", default="SPY")
-    p.add_argument("--contracts", type=int, default=2)
-    p.add_argument("--underlying_move_target", type=float, default=1.0)
-    p.add_argument("--itm_offset", type=float, default=1.05)
-    p.add_argument("--rsi_period", type=int, default=14)
-    p.add_argument("--ema_period", type=int, default=9)
-    p.add_argument("--rsi_oversold", type=float, default=30.0)
-    p.add_argument("--rsi_overbought", type=float, default=70.0)
-    p.add_argument("--paper_trading", action="store_true")
-    p.add_argument("--port", type=int, default=7497)
+    p.add_argument("--ticker", default="SPY", help="Underlying ticker symbol")
+    p.add_argument("--contracts", type=int, default=2, help="Number of option contracts to trade")
+    p.add_argument("--underlying_move_target", type=float, default=1.0, help="First profit target (underlying $ move)")
+    p.add_argument("--itm_offset", type=float, default=1.05, help="Underlying distance beyond strike for second target")
+    p.add_argument("--rsi_period", type=int, default=14, help="RSI calculation period")
+    p.add_argument("--ema_period", type=int, default=9, help="EMA calculation period")
+    p.add_argument("--rsi_oversold", type=float, default=30.0, help="RSI oversold level")
+    p.add_argument("--rsi_overbought", type=float, default=70.0, help="RSI overbought level")
+    p.add_argument("--paper_trading", action="store_true", help="Use paper trading account")
+    p.add_argument("--port", type=int, default=7497, help="Port number")
+    
+    # Add the missing arguments
+    p.add_argument("--rsi_threshold", type=float, default=0.01, help="Threshold for RSI trigger")
+    p.add_argument("--ema_threshold", type=float, default=0.01, help="Threshold for EMA confirmation")
+    
     args = p.parse_args()
 
     strat = SPYREVStrategy(
@@ -392,6 +397,7 @@ if __name__ == "__main__":
         rsi_overbought=args.rsi_overbought,
         paper_trading=args.paper_trading,
         port=args.port,
+        rsi_threshold=args.rsi_threshold,  # Pass rsi_threshold
+        ema_threshold=args.ema_threshold,  # Pass ema_threshold
     )
     strat.run()
-
