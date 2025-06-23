@@ -217,9 +217,9 @@ class SPYORBStrategy:
                 if self.position is not None:
                     underlying_price = self.get_underlying_price()
                     option_price = self.ib.reqTickers(self.option_contract)[0].marketPrice()
-                    last_closed = df.iloc[-2]
                     df["ema9"] = df["close"].ewm(span=9, adjust=False).mean()
                     df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
+                    last_closed = df.iloc[-2]
                     ema9 = df.iloc[-2]["ema9"]
                     ema20 = df.iloc[-2]["ema20"]
                     if self.position == "CALL" and last_closed["close"] < ema9 and last_closed["close"] < ema20:
