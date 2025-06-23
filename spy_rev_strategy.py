@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# SPY REV CHAD: SPY Reversal Highly Automated Dealer
+# An automated trading system that implements a 5-minute reversal strategy for SPY options.
+
 import pandas as pd
 import numpy as np
 import datetime
@@ -22,9 +27,9 @@ class SPYREVStrategy:
         self.paper_trading = kwargs.get("paper_trading", True)
         self.port = kwargs.get("port", 7497)
 
-        # New partial sell targets
-        self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Targets for partial sell based on underlying price movement
-        
+        # New partial sell targets (based on price movement)
+        self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Target move in price (e.g., $1, $2)
+
         # Trading state - can have multiple positions
         self.positions = []  # List of active positions
         self.half_position_closed = False  # Track if half position is closed
@@ -45,16 +50,17 @@ class SPYREVStrategy:
         if not self.positions:  # No positions to monitor
             return
 
-        # Iterate through each position and check if partial sell targets are reached
         for position in self.positions[:]:
+            # Calculate price movement from entry price
             price_movement = underlying_price - position['entry_underlying_price']
+            
             for target in self.partial_sell_targets:
                 if price_movement >= target and target not in position.get('sold_targets', []):
                     self.sell_partial_position(position, target)
-                    position.setdefault('sold_targets', []).append(target)  # Track sold targets for the position
+                    position.setdefault('sold_targets', []).append(target)  # Track sold targets
 
     def sell_partial_position(self, position, target):
-        """Sell half of the position based on target."""
+        """Sell half of the position based on target price movement."""
         qty_to_sell = position['contracts'] // 2
         action = "SELL"
         print(f"Selling {qty_to_sell} contracts at {target} price move target")
