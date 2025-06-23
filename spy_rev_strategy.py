@@ -216,28 +216,28 @@ class SPYREVStrategy:
         return None
 
     def check_entry_conditions(self, df: pd.DataFrame) -> str | None:
-    """Once RSI signal is set, wait for any candle to close across the 9 EMA."""
-    if self.in_trade or self.rsi_signal is None:
+        """Once RSI signal is set, wait for any candle to close across the 9 EMA."""
+        if self.in_trade or self.rsi_signal is None:
+            return None
+
+        last_candle = df.iloc[-1]  # Get the most recent completed candle
+        close_price = last_candle['close']
+        ema_9 = last_candle['ema_9']
+
+        if pd.isna(ema_9):
+            return None
+
+        # Long entry: Price must close above 9 EMA
+        if self.rsi_signal == "LONG_SETUP" and close_price > ema_9 + self.ema_threshold:
+            print(f"[{last_candle['date']}] Entering LONG position at price {close_price:.2f}")
+            return "ENTER_LONG"
+
+        # Short entry: Price must close below 9 EMA
+        elif self.rsi_signal == "SHORT_SETUP" and close_price < ema_9 - self.ema_threshold:
+            print(f"[{last_candle['date']}] Entering SHORT position at price {close_price:.2f}")
+            return "ENTER_SHORT"
+
         return None
-
-    last_candle = df.iloc[-1]  # Get the most recent completed candle
-    close_price = last_candle['close']
-    ema_9 = last_candle['ema_9']
-
-    if pd.isna(ema_9):
-        return None
-
-    # Long entry: Price must close above 9 EMA
-    if self.rsi_signal == "LONG_SETUP" and close_price > ema_9 + self.ema_threshold:
-        print(f"[{last_candle['date']}] Entering LONG position at price {close_price:.2f}")
-        return "ENTER_LONG"
-
-    # Short entry: Price must close below 9 EMA
-    elif self.rsi_signal == "SHORT_SETUP" and close_price < ema_9 - self.ema_threshold:
-        print(f"[{last_candle['date']}] Entering SHORT position at price {close_price:.2f}")
-        return "ENTER_SHORT"
-
-    return None
 
 
     # ---------------------------------------------------------------------
