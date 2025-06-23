@@ -24,8 +24,8 @@ class SPYREVStrategy:
 
         # New partial sell targets
         self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Targets for partial sell based on underlying price movement
-
-        # Trading state
+        
+        # Trading state - can have multiple positions
         self.positions = []  # List of active positions
         self.half_position_closed = False  # Track if half position is closed
         
