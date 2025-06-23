@@ -62,6 +62,7 @@ class SPYREVStrategy:
         self.rsi_signal = None  # "LONG_SETUP" or "SHORT_SETUP" or None
         self.rsi_signal_price = None  # Price when RSI signal occurred
         self.monitoring_started = False
+        self.in_trade = False  # Track if we are in a trade
 
         # IB & timezone
         self.tz = pytz.timezone("US/Central")
@@ -197,6 +198,9 @@ class SPYREVStrategy:
     # ---------------------------------------------------------------------
     def check_rsi_signal(self, df: pd.DataFrame) -> str | None:
         """Check for RSI extreme conditions on the last completed candle."""
+        if self.in_trade:  # If we're already in a trade, skip RSI check
+            return None
+
         if len(df) < 1:
             return None
             
@@ -217,6 +221,9 @@ class SPYREVStrategy:
 
     def check_entry_conditions(self, df: pd.DataFrame) -> str | None:
         """Check if entry conditions are met based on existing RSI signal."""
+        if self.in_trade:  # Skip entry checks if in a trade
+            return None
+            
         if len(df) < 1 or self.rsi_signal is None:
             return None
             
@@ -250,10 +257,11 @@ class SPYREVStrategy:
 
     def enter_position(self, position_type: str):
         """Enter CALL or PUT position."""
-        # Check if we already have a position of this type
-        if self.has_position_type(position_type):
-            print(f"Already have a {position_type} position - skipping entry")
+        if self.in_trade:
+            print(f"Already in a trade, skipping new entry.")
             return
+
+        self.in_trade = True  # Mark that we're in a trade now
 
         right = "C" if position_type == "CALL" else "P"
         option_contract = self.get_option_contract(right)
@@ -282,55 +290,18 @@ class SPYREVStrategy:
         self.rsi_signal = None
         self.rsi_signal_price = None
 
-    def check_stop_loss(self, position: dict, last_candle: pd.Series) -> bool:
-        """Check if stop loss should be triggered."""
-        close_price = last_candle['close']
-        
-        if position['type'] == "CALL":
-            return close_price < position['stop_loss_price']
-        else:  # PUT
-            return close_price > position['stop_loss_price']
-
-    def check_profit_targets(self, position: dict) -> str | None:
-        """Check profit targets for a position."""
-        current_price = self.get_underlying_price()
-        option_price = self.ib.reqTickers(position['contract'])[0].marketPrice()
-        
-        # First profit target: $1.00 move in underlying
-        if not position['half_sold']:
-            if position['type'] == "CALL":
-                if current_price >= position['entry_underlying_price'] + self.underlying_move_target:
-                    return "FIRST_TARGET"
-            else:  # PUT
-                if current_price <= position['entry_underlying_price'] - self.underlying_move_target:
-                    return "FIRST_TARGET"
-        
-        # After first target hit, check breakeven on remaining half
-        if position['half_sold']:
-            if option_price <= position['entry_option_price']:
-                return "BREAKEVEN_STOP"
-        
-        # Second profit target: $1.05 ITM
-        if position['type'] == "CALL":
-            if current_price >= position['entry_strike'] + self.itm_offset:
-                return "SECOND_TARGET"
-        else:  # PUT
-            if current_price <= position['entry_strike'] - self.itm_offset:
-                return "SECOND_TARGET"
-        
-        return None
-
     def exit_position(self, position: dict, reason: str, partial: bool = False):
         """Exit position (full or partial)."""
+        self.in_trade = False  # Trade is closed, reset flag
+
+        # Sell remaining or half
         if partial and not position['half_sold']:
-            # Sell half
             quantity = self.contracts // 2
             position['contracts_remaining'] = self.contracts - quantity
             position['half_sold'] = True
         else:
-            # Sell remaining
             quantity = position['contracts_remaining']
-            
+        
         self.place_order(position['contract'], "SELL", quantity)
         
         # Calculate P/L
@@ -358,6 +329,7 @@ class SPYREVStrategy:
         self.rsi_signal = None
         self.rsi_signal_price = None
         self.monitoring_started = False
+        self.in_trade = False
 
     def run(self):
         if not self.connect_to_ib():
@@ -479,4 +451,4 @@ if __name__ == "__main__":
         rsi_threshold=args.rsi_threshold,
         ema_threshold=args.ema_threshold,
     )
-    strategy.run() 
+    strategy.run()
