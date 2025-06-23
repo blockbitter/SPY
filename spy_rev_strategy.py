@@ -21,10 +21,10 @@ class SPYREVStrategy:
         self.rsi_overbought = kwargs.get("rsi_overbought", 70.0)
         self.paper_trading = kwargs.get("paper_trading", True)
         self.port = kwargs.get("port", 7497)
-        
-        # New partial sell targets (to replace old profit targets)
+
+        # New partial sell targets
         self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Targets for partial sell based on underlying price movement
-        
+
         # Trading state
         self.positions = []  # List of active positions
         self.half_position_closed = False  # Track if half position is closed
@@ -43,14 +43,15 @@ class SPYREVStrategy:
     def monitor_price_move(self, underlying_price):
         """Monitor price move to trigger partial sell conditions."""
         if not self.positions:  # No positions to monitor
-            return 
+            return
 
+        # Iterate through each position and check if partial sell targets are reached
         for position in self.positions[:]:
             price_movement = underlying_price - position['entry_underlying_price']
             for target in self.partial_sell_targets:
                 if price_movement >= target and target not in position.get('sold_targets', []):
                     self.sell_partial_position(position, target)
-                    position['sold_targets'].append(target)  # Track the targets that have been sold
+                    position.setdefault('sold_targets', []).append(target)  # Track sold targets for the position
 
     def sell_partial_position(self, position, target):
         """Sell half of the position based on target."""
