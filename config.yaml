@@ -15,7 +15,7 @@ strategies:
       port: 7497
 
   spx_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "SPX"
@@ -26,7 +26,7 @@ strategies:
       port: 7497
 
   qqq_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "QQQ"
@@ -34,10 +34,10 @@ strategies:
       underlying_move_target: 1.55  # same as SPY
       itm_offset: 2.05
       paper_trading: true
-      port: 7498
+      port: 7497
 
   nvda_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "NVDA"
@@ -45,10 +45,10 @@ strategies:
       underlying_move_target: 0.50  # ATM + $0.02 with $0.50 minimum move
       itm_offset: 1.02
       paper_trading: true
-      port: 7498
+      port: 7497
 
   tsla_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "TSLA"
@@ -56,10 +56,21 @@ strategies:
       underlying_move_target: 2.05  # ATM + $0.15 with $1.00 minimum move
       itm_offset: 1.05               # 1 ITM + $0.05
       paper_trading: true
-      port: 7498
+      port: 7497
+
+  amzn_orb:
+    enabled: true
+    script: "spy_orb_strategy.py"
+    args:
+      ticker: "AMZN"
+      contracts: 2
+      underlying_move_target: 2.05  # ATM + $0.15 with $1.00 minimum move
+      itm_offset: 1.05               # 1 ITM + $0.05
+      paper_trading: true
+      port: 7497
 
   iwm_orb:
-    enabled: false
+    enabled: true
     script: "spy_orb_strategy.py"
     args:
       ticker: "IWM"
@@ -67,7 +78,7 @@ strategies:
       underlying_move_target: 0.50  # same as NVDA
       itm_offset: 1.02
       paper_trading: true
-      port: 7498
+      port: 7497
 
   spy_rev:
     enabled: true
@@ -83,7 +94,7 @@ strategies:
       port: 7497
 
   spx_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPX"
@@ -91,10 +102,10 @@ strategies:
       underlying_move_target: 2.25  # 2 ITM + $0.25
       itm_offset: 4.25               # 4 ITM + $0.25
       paper_trading: true
-      port: 7499
+      port: 7497
 
   qqq_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "QQQ"
@@ -102,10 +113,10 @@ strategies:
       underlying_move_target: 0.80  # same as SPY
       itm_offset: 2.05
       paper_trading: true
-      port: 7499
+      port: 7497
 
   tsla_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "TSLA"
@@ -113,10 +124,21 @@ strategies:
       underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
       itm_offset: 1.05
       paper_trading: true
-      port: 7499
+      port: 7497
+
+  amzn_rev:
+    enabled: true
+    script: "spy_rev_strategy.py"
+    args:
+      ticker: "AMZN"
+      contracts: 2
+      underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
+      itm_offset: 1.05
+      paper_trading: true
+      port: 7497
 
   iwm_rev:
-    enabled: false
+    enabled: true
     script: "spy_rev_strategy.py"
     args:
       ticker: "IWM"
@@ -124,7 +146,75 @@ strategies:
       underlying_move_target: 0.60  # ATM + $0.02 with $0.60 minimum move
       itm_offset: 1.02
       paper_trading: true
-      port: 7499
+      port: 7497
+
+  spy_bosk:
+    enabled: true
+    script: "spy_bosk_strategy.py"
+    args:
+      ticker: "SPY"
+      contracts: 2
+      underlying_move_target: 0.80  # ATM + $0.05 with $0.80 minimum move
+      itm_offset: 2.05               # 2 ITM + $0.05
+      paper_trading: true
+      rsi_threshold: 0.01 # this number is subtracted from oversold, added to overbought. (so for this case, it would be 29.99 oversold, 70.01 overbought)
+      ema_threshold: 0.01 # this number is subtracted from short setup, added to long setup. (so for this case, it would be 9.01 long, 8.99 short)
+      port: 7497
+
+  spx_bosk:
+    enabled: true
+    script: "spy_bosk_strategy.py"
+    args:
+      ticker: "SPX"
+      contracts: 1
+      underlying_move_target: 2.25  # 2 ITM + $0.25
+      itm_offset: 4.25               # 4 ITM + $0.25
+      paper_trading: true
+      port: 7497
+
+  qqq_bosk:
+    enabled: true
+    script: "spy_bosk_strategy.py"
+    args:
+      ticker: "QQQ"
+      contracts: 2
+      underlying_move_target: 0.80  # same as SPY
+      itm_offset: 2.05
+      paper_trading: true
+      port: 7497
+
+  tsla_bosk:
+    enabled: true
+    script: "spy_bosk_strategy.py"
+    args:
+      ticker: "TSLA"
+      contracts: 2
+      underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
+      itm_offset: 1.05
+      paper_trading: true
+      port: 7497
+
+  amzn_bosk:
+    enabled: true
+    script: "spy_rev_strategy.py"
+    args:
+      ticker: "AMZN"
+      contracts: 2
+      underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
+      itm_offset: 1.05
+      paper_trading: true
+      port: 7497
+
+  iwm_bosk:
+    enabled: true
+    script: "spy_rev_strategy.py"
+    args:
+      ticker: "IWM"
+      contracts: 2
+      underlying_move_target: 0.60  # ATM + $0.02 with $0.60 minimum move
+      itm_offset: 1.02
+      paper_trading: true
+      port: 7497
 
 # Global settings
 global:
