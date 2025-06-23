@@ -209,36 +209,34 @@ class SPYREVStrategy:
 
         if pd.isna(rsi):
             return None
-            
-        if rsi < self.rsi_oversold - self.rsi_threshold:
+
+        if rsi > self.rsi_overbought + self.rsi_threshold and self.rsi_signal is None:
+            # Record the signal when RSI crosses above 70
             self.rsi_signal_price = last_candle['close']
-            return "LONG_SETUP"
-        elif rsi > self.rsi_overbought + self.rsi_threshold:
-            self.rsi_signal_price = last_candle['close']
-            return "SHORT_SETUP"
-        
+            self.rsi_signal = "SHORT_SETUP"  # Indicates a short setup
+            print(f"RSI crossed above 70 at {last_candle['date']} with price: {self.rsi_signal_price:.2f}")
+
         return None
 
     def check_entry_conditions(self, df: pd.DataFrame) -> str | None:
         """Check if entry conditions are met based on existing RSI signal."""
         if self.in_trade:  # Skip entry checks if in a trade
             return None
-            
+
         if len(df) < 1 or self.rsi_signal is None:
             return None
-            
+
         last_candle = df.iloc[-1]  # Last completed candle
         close_price = last_candle['close']
         ema_9 = last_candle['ema_9']
-        
+
         if pd.isna(ema_9):
             return None
-            
-        if self.rsi_signal == "LONG_SETUP" and close_price > ema_9 + self.ema_threshold:
-            return "ENTER_LONG"
-        elif self.rsi_signal == "SHORT_SETUP" and close_price < ema_9 - self.ema_threshold:
-            return "ENTER_SHORT"
-            
+
+        if self.rsi_signal == "SHORT_SETUP" and close_price < ema_9 - self.ema_threshold:
+            self.in_trade = True  # Mark as in a trade
+            return "ENTER_SHORT"  # This triggers the short position (Put)
+        
         return None
 
     # ---------------------------------------------------------------------
@@ -301,7 +299,7 @@ class SPYREVStrategy:
             position['half_sold'] = True
         else:
             quantity = position['contracts_remaining']
-        
+
         self.place_order(position['contract'], "SELL", quantity)
         
         # Calculate P/L
@@ -452,3 +450,4 @@ if __name__ == "__main__":
         ema_threshold=args.ema_threshold,
     )
     strategy.run()
+
