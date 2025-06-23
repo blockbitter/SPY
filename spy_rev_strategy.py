@@ -22,8 +22,8 @@ class SPYREVStrategy:
         self.paper_trading = kwargs.get("paper_trading", True)
         self.port = kwargs.get("port", 7497)
         
-        # New partial sell targets
-        self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Example targets: $1.00 and $2.00
+        # New partial sell targets (to replace old profit targets)
+        self.partial_sell_targets = kwargs.get("partial_sell_targets", [1.00, 2.00])  # Targets for partial sell based on underlying price movement
         
         # Trading state
         self.positions = []  # List of active positions
@@ -42,23 +42,55 @@ class SPYREVStrategy:
 
     def monitor_price_move(self, underlying_price):
         """Monitor price move to trigger partial sell conditions."""
-        if self.position == 0:
-            return  # No position to monitor
+        if not self.positions:  # No positions to monitor
+            return 
 
-        # Check for partial sell conditions based on underlying price movement
-        price_movement = underlying_price - self.entry_underlying_price
-        for target in self.partial_sell_targets:
-            if price_movement >= target and target not in self.sold_targets:
-                self.sell_partial_position(target)
-                self.sold_targets.append(target)  # Ensure we only sell once per target
+        for position in self.positions[:]:
+            price_movement = underlying_price - position['entry_underlying_price']
+            for target in self.partial_sell_targets:
+                if price_movement >= target and target not in position.get('sold_targets', []):
+                    self.sell_partial_position(position, target)
+                    position['sold_targets'].append(target)  # Track the targets that have been sold
 
-    def sell_partial_position(self, target):
+    def sell_partial_position(self, position, target):
         """Sell half of the position based on target."""
-        qty_to_sell = self.contracts // 2
+        qty_to_sell = position['contracts'] // 2
         action = "SELL"
         print(f"Selling {qty_to_sell} contracts at {target} price move target")
-        self.place_order(self.option_contract, action, qty_to_sell)
+        self.place_order(position['contract'], action, qty_to_sell)
 
+    def exit_all(self, reason: str):
+        """Exit all positions based on a given reason."""
+        print(f"Exiting all positions due to: {reason}")
+        for position in self.positions[:]:
+            self.exit_position(position, reason)
+
+    def exit_position(self, position: dict, reason: str):
+        """Exit a specific position."""
+        if not position.get('half_sold', False):
+            quantity = position['contracts'] // 2
+            position['half_sold'] = True
+            self.place_order(position['contract'], "SELL", quantity)
+            self.half_position_closed = True
+        else:
+            quantity = position['contracts_remaining']
+            self.place_order(position['contract'], "SELL", quantity)
+
+        # Log the reason for exiting the position
+        print(f"Exited {position['type']} position | Reason: {reason}")
+
+        # Remove position from active positions list
+        self.positions.remove(position)
+
+    def is_force_close_time(self) -> bool:
+        """Check if it's time to force close positions (2:55 PM)."""
+        now = datetime.datetime.now(self.tz)
+        force_close_time = self.tz.localize(
+            datetime.datetime.combine(now.date(), datetime.datetime.strptime(self.force_close_time, "%H:%M:%S").time())
+        )
+        return now >= force_close_time
+
+    # Main loop and strategy execution
     def run(self):
         if not self.connect_to_ib():
             return
@@ -70,7 +102,7 @@ class SPYREVStrategy:
                 if df is None or len(df) < self.rsi_period + self.ema_period:
                     time.sleep(30)
                     continue
-
+                
                 # Calculate RSI and 9 EMA
                 df = self.calculate_indicators(df)
                 
@@ -82,9 +114,8 @@ class SPYREVStrategy:
                 # Monitor price for partial sell conditions
                 self.monitor_price_move(self.get_underlying_price())
 
-                # Manage positions with stop loss and breakeven logic
+                # Manage stop loss and breakeven conditions
                 for position in self.positions[:]:
-                    # Example: Adding stop loss logic here
                     if self.check_initial_stop_loss(position, last_candle):
                         self.exit_position(position, "Initial Stop Loss")
                         continue
@@ -122,6 +153,6 @@ if __name__ == "__main__":
         contracts=args.contracts,
         paper_trading=args.paper_trading,
         port=args.port,
-        partial_sell_targets=args.partial_sell_targets  # New logic for partial sell targets
+        partial_sell_targets=args.partial_sell_targets  # Added the partial sell targets
     )
     strategy.run()
