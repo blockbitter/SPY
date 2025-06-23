@@ -282,26 +282,26 @@ class SPYORBStrategy:
                         self.enter_position("PUT")
                         daily_trade_done = True
 
-                # Manage open position
-                if self.position is not None:
-                    underlying_price = self.get_underlying_price()
-                    option_price = self.ib.reqTickers(self.option_contract)[0].marketPrice()
+                    # Manage open position
+                    if self.position is not None:
+                        underlying_price = self.get_underlying_price()
+                        option_price = self.ib.reqTickers(self.option_contract)[0].marketPrice()
 
-                # EMA-based stop loss
-                last_closed = df.iloc[-2]
-                df["ema9"] = df["close"].ewm(span=9, adjust=False).mean()
-                df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
-                ema9 = df.iloc[-2]["ema9"]
-                ema20 = df.iloc[-2]["ema20"]
+                    # EMA-based stop loss
+                    last_closed = df.iloc[-2]
+                    df["ema9"] = df["close"].ewm(span=9, adjust=False).mean()
+                    df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
+                    ema9 = df.iloc[-2]["ema9"]
+                    ema20 = df.iloc[-2]["ema20"]
 
-                if self.position == "CALL" and last_closed["close"] < ema9 and last_closed["close"] < ema20:
-                    self.exit_all("EMA stop loss (CALL)")
-                    time.sleep(5)
-                    continue
-                if self.position == "PUT" and last_closed["close"] > ema9 and last_closed["close"] > ema20:
-                    self.exit_all("EMA stop loss (PUT)")
-                    time.sleep(5)
-                    continue
+                    if self.position == "CALL" and last_closed["close"] < ema9 and last_closed["close"] < ema20:
+                        self.exit_all("EMA stop loss (CALL)")
+                        time.sleep(5)
+                        continue
+                    if self.position == "PUT" and last_closed["close"] > ema9 and last_closed["close"] > ema20:
+                        self.exit_all("EMA stop loss (PUT)")
+                        time.sleep(5)
+                        continue
 
 
                     # Profit target 1 - underlying +/- $1
