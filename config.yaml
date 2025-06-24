@@ -86,11 +86,9 @@ strategies:
     args:
       ticker: "SPY"
       contracts: 2
-      underlying_move_target: 0.80  # ATM + $0.05 with $0.80 minimum move
-      itm_offset: 2.05               # 2 ITM + $0.05
+      underlying_move_target: 1.00  
+      itm_offset: 2.00              
       paper_trading: true
-      rsi_threshold: 0.01 # this number is subtracted from oversold, added to overbought. (so for this case, it would be 29.99 oversold, 70.01 overbought)
-      ema_threshold: 0.01 # this number is subtracted from short setup, added to long setup. (so for this case, it would be 9.01 long, 8.99 short)
       port: 7497
 
   spx_rev:
@@ -98,9 +96,9 @@ strategies:
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPX"
-      contracts: 1
-      underlying_move_target: 2.25  # 2 ITM + $0.25
-      itm_offset: 4.25               # 4 ITM + $0.25
+      contracts: 2
+      underlying_move_target: 15.00  
+      itm_offset: 30.00            
       paper_trading: true
       port: 7497
 
@@ -110,8 +108,19 @@ strategies:
     args:
       ticker: "QQQ"
       contracts: 2
-      underlying_move_target: 0.80  # same as SPY
-      itm_offset: 2.05
+      underlying_move_target: 1.00  
+      itm_offset: 2.00  
+      paper_trading: true
+      port: 7497
+
+  nvda-rev:
+    enabled: true
+    script: "spy_rev_strategy.py"
+    args:
+    ticker: "NVDA"
+      contracts: 2
+      underlying_move_target: 0.50  
+      itm_offset: 1.00   
       paper_trading: true
       port: 7497
 
@@ -121,8 +130,19 @@ strategies:
     args:
       ticker: "TSLA"
       contracts: 2
-      underlying_move_target: 2.00  # ATM + $0.15 with $1.00 minimum move
-      itm_offset: 1.05
+      underlying_move_target: 2.00  
+      itm_offset: 4.00               
+      paper_trading: true
+      port: 7497
+
+  amzn-rev:
+    enabled: true
+    script: "spy_rev_strategy.py"
+    args:
+    ticker: "AMZN"
+      contracts: 2
+      underlying_move_target: 1.00  
+      itm_offset: 2.00    
       paper_trading: true
       port: 7497
 
@@ -132,8 +152,8 @@ strategies:
     args:
       ticker: "IWM"
       contracts: 2
-      underlying_move_target: 0.60  # ATM + $0.02 with $0.60 minimum move
-      itm_offset: 1.02
+      underlying_move_target: 0.50  
+      itm_offset: 1.00   
       paper_trading: true
       port: 7497
 
