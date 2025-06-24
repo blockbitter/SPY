@@ -19,9 +19,9 @@ strategies:
     script: "spy_orb_strategy.py"
     args:
       ticker: "SPX"
-      contracts: 1
-      underlying_move_target: 2.25  # 2 ITM + $0.25 from strike
-      itm_offset: 4.25               # 4 ITM + $0.25 from strike
+      contracts: 2
+      underlying_move_target: 15.00  
+      itm_offset: 30.00            
       paper_trading: true
       port: 7497
 
@@ -31,8 +31,8 @@ strategies:
     args:
       ticker: "QQQ"
       contracts: 2
-      underlying_move_target: 1.55  # same as SPY
-      itm_offset: 2.05
+      underlying_move_target: 1.00  
+      itm_offset: 2.00  
       paper_trading: true
       port: 7497
 
@@ -42,8 +42,8 @@ strategies:
     args:
       ticker: "NVDA"
       contracts: 2
-      underlying_move_target: 0.50  # ATM + $0.02 with $0.50 minimum move
-      itm_offset: 1.02
+      underlying_move_target: 0.50  
+      itm_offset: 1.00   
       paper_trading: true
       port: 7497
 
@@ -53,8 +53,8 @@ strategies:
     args:
       ticker: "TSLA"
       contracts: 2
-      underlying_move_target: 2.05  # ATM + $0.15 with $1.00 minimum move
-      itm_offset: 1.05               # 1 ITM + $0.05
+      underlying_move_target: 2.00  
+      itm_offset: 4.00               
       paper_trading: true
       port: 7497
 
@@ -64,8 +64,8 @@ strategies:
     args:
       ticker: "AMZN"
       contracts: 2
-      underlying_move_target: 1.55  # same as SPY
-      itm_offset: 2.05
+      underlying_move_target: 1.00  
+      itm_offset: 2.00    
       paper_trading: true
       port: 7497
 
@@ -75,8 +75,8 @@ strategies:
     args:
       ticker: "IWM"
       contracts: 2
-      underlying_move_target: 0.50  # same as NVDA
-      itm_offset: 1.02
+      underlying_move_target: 0.50  
+      itm_offset: 1.00   
       paper_trading: true
       port: 7497
 
