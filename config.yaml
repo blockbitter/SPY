@@ -98,7 +98,7 @@ strategies:
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPX"
-      contracts: 1
+      contracts: 2
       underlying_move_target: 15.00  
       itm_offset: 30.00               
       paper_trading: true
