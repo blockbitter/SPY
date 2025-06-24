@@ -87,8 +87,10 @@ strategies:
       ticker: "SPY"
       contracts: 2
       underlying_move_target: 1.00  
-      itm_offset: 2.00              
+      itm_offset: 2.00               
       paper_trading: true
+      rsi_threshold: 0.01 # this number is subtracted from oversold, added to overbought. (so for this case, it would be 29.99 oversold, 70.01 overbought)
+      ema_threshold: 0.01 # this number is subtracted from short setup, added to long setup. (so for this case, it would be 9.01 long, 8.99 short)
       port: 7497
 
   spx_rev:
@@ -96,9 +98,9 @@ strategies:
     script: "spy_rev_strategy.py"
     args:
       ticker: "SPX"
-      contracts: 2
+      contracts: 1
       underlying_move_target: 15.00  
-      itm_offset: 30.00            
+      itm_offset: 30.00               
       paper_trading: true
       port: 7497
 
@@ -109,18 +111,7 @@ strategies:
       ticker: "QQQ"
       contracts: 2
       underlying_move_target: 1.00  
-      itm_offset: 2.00  
-      paper_trading: true
-      port: 7497
-
-  nvda-rev:
-    enabled: true
-    script: "spy_rev_strategy.py"
-    args:
-    ticker: "NVDA"
-      contracts: 2
-      underlying_move_target: 0.50  
-      itm_offset: 1.00   
+      itm_offset: 2.00   
       paper_trading: true
       port: 7497
 
@@ -131,18 +122,7 @@ strategies:
       ticker: "TSLA"
       contracts: 2
       underlying_move_target: 2.00  
-      itm_offset: 4.00               
-      paper_trading: true
-      port: 7497
-
-  amzn-rev:
-    enabled: true
-    script: "spy_rev_strategy.py"
-    args:
-    ticker: "AMZN"
-      contracts: 2
-      underlying_move_target: 1.00  
-      itm_offset: 2.00    
+      itm_offset: 4.00  
       paper_trading: true
       port: 7497
 
@@ -153,7 +133,7 @@ strategies:
       ticker: "IWM"
       contracts: 2
       underlying_move_target: 0.50  
-      itm_offset: 1.00   
+      itm_offset: 1.00  
       paper_trading: true
       port: 7497
 
@@ -162,3 +142,4 @@ global:
   log_level: "INFO"
   max_retries: 3
   restart_on_failure: true
+  
