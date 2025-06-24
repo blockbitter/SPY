@@ -9,10 +9,11 @@ strategies:
     args:
       ticker: "SPY"
       contracts: 2
-      underlying_move_target: 1.55  # 1 ITM + $0.05 from strike
-      itm_offset: 2.05               # 2 ITM + $0.05 from strike
       paper_trading: true
       port: 7497
+      partial_sell_targets:
+        - 1.00  # Sell half of the position after a $1 move
+        - 2.00  # Sell the remaining half after a $2 move
 
   spx_orb:
     enabled: true
@@ -134,17 +135,6 @@ strategies:
       contracts: 2
       underlying_move_target: 0.60  # ATM + $0.02 with $0.60 minimum move
       itm_offset: 1.02
-      paper_trading: true
-      port: 7497
-
-   spy_bosk:
-    enabled: false
-    script: "spy_bosk_strategy.py"
-    args:
-      ticker: "SPY"
-      contracts: 2
-      underlying_move_target: 1.55  # 1 ITM + $0.05 from strike
-      itm_offset: 2.05               # 2 ITM + $0.05 from strike
       paper_trading: true
       port: 7497
 
